@@ -1,4 +1,8 @@
 *.out
-output_*
 *.h5
 *.dat
+data/*
+*.png
+*.pyc
+.bashrc
+python.sh
