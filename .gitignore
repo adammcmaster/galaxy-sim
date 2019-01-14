@@ -6,3 +6,6 @@ data/*
 *.pyc
 .bashrc
 python.sh
+.DS_Store
+._*
+*~
