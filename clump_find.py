@@ -14,7 +14,15 @@ CUBE_PADDING = 0.001
 MAX_LEVEL = int(sys.argv[1])
 
 DATA_PATH = 'data'
-RAMSES_INPUT_DIR = os.path.join(DATA_PATH, 'output_00149')
+RAMSES_INPUT_NUM = 149
+RAMSES_INPUT_DIR = os.path.join(
+    DATA_PATH,
+    'output_{:05d}'.format(RAMSES_INPUT_NUM),
+)
+RAMSES_INPUT_INFO = os.path.join(
+    RAMSES_INPUT_DIR,
+    'info_{:05d}.txt'.format(RAMSES_INPUT_NUM),
+)
 CUBE_DIR = os.path.join(DATA_PATH, 'cubes')
 PLOT_DIR = os.path.join(DATA_PATH, 'plots')
 CLUMP_DIR = os.path.join(DATA_PATH, 'clumps')
@@ -38,28 +46,39 @@ cube_data = RamsesData(
     save_dir=CUBE_DIR,
 )
 
-ds = yt.load_uniform_grid(dict(density=cube_data.cube), cube_data.cube.shape)
-data_source = ds.disk(
+ramses_ds = yt.load(RAMSES_INPUT_INFO)
+cube_ds = yt.load_uniform_grid(
+    dict(density=cube_data.cube),
+    cube_data.cube.shape,
+    length_unit=ramses_ds.length_unit/512,#3080*6.02,
+)
+disk = cube_ds.disk(
     GALAXY_CENTRE,
     [0., 0., 1.],
     (1, 'kpc'),
     (0.5, 'kpc'),
 )
 
-c_min = data_source["density"].min()
-c_max = data_source["density"].max()
+c_min = disk["density"].min()
+c_max = disk["density"].max()
 step = 8.0
 
 clump_file = os.path.join(CLUMP_DIR, '{}_clumps.h5'.format(MAX_LEVEL))
 if os.path.isfile(clump_file):
     master_clump = yt.load(clump_file)
 else:
-    master_clump = Clump(data_source, "density")
+    master_clump = Clump(disk, "density")
     find_clumps(master_clump, c_min, c_max, step)
     master_clump.save_as_dataset(clump_file, ['density'])
 
 leaf_clumps = get_lowest_clumps(master_clump)
 
-plot = yt.ProjectionPlot(ds, "x", "density", center=GALAXY_CENTRE)
+
+
+plot = yt.ProjectionPlot(ramses_ds, "x", "density", center=GALAXY_CENTRE, width=(5, 'kpc'))
+plot.save(os.path.join(PLOT_DIR, 'ramses_{}'.format(MAX_LEVEL)))
+
+plot = yt.ProjectionPlot(cube_ds, "x", "density", center=GALAXY_CENTRE, width=(5, 'kpc'))
+plot.save(os.path.join(PLOT_DIR, 'cube_{}'.format(MAX_LEVEL)))
 plot.annotate_clumps(leaf_clumps)
-plot.save(os.path.join(PLOT_DIR, 'clumps{}'.format(MAX_LEVEL)))
+plot.save(os.path.join(PLOT_DIR, 'clumps_{}'.format(MAX_LEVEL)))

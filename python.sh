@@ -1,6 +1,6 @@
 #!/bin/bash -l
 echo =========================================================   
-echo Job submitted  date = Mon Sep 10 17:35:54 BST 2018      
+echo Job submitted  date = Fri Oct 26 12:32:39 BST 2018      
 date_start=`date +%s`
 echo $SLURM_JOB_NUM_NODES nodes \( $SMP processes per node \)        
 echo $SLURM_JOB_NUM_NODES hosts used: $SLURM_JOB_NODELIST      
@@ -11,7 +11,7 @@ echo
 #ulimit -l
 #which mpirun
 export OMP_NUM_THEADS=1
- /usr/local/shared/slurm/bin/srun -n 1 --mpi=pmi2 --mem-per-cpu=48000 nice -n 10 /usr/local/shared/python/2.7.6-gcc/bin/python clump_find.py
+ /usr/local/shared/slurm/bin/srun -n 1 --mpi=pmi2 --mem-per-cpu=50000 nice -n 10 /mnt/zfsusers/mcmaster/.virtualenvs/clumps/bin/python clump_find.py 17
 # If we've been checkpointed
 #if [ -n "${DMTCP_CHECKPOINT_DIR}" ]; then
   if [ -d "${DMTCP_CHECKPOINT_DIR}" ]; then

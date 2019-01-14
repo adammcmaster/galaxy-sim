@@ -9,7 +9,7 @@ class RamsesData:
     def __init__(
         self,
         idir,
-        type=1,
+        sim_type=1,
         xmin=0,
         xmax=1,
         ymin=0,
@@ -25,7 +25,7 @@ class RamsesData:
         time_path = os.path.join(save_dir, '{}_time.txt'.format(lmax))
 
         if (
-            save_dir 
+            save_dir
             and os.path.isfile(cube_path)
             and os.path.isfile(time_path)
         ):
@@ -45,8 +45,20 @@ class RamsesData:
         self.ymin=ymin ; self.ymax=ymax
         self.zmin=zmin ; self.zmax=zmax
 
-        self.cube,self.time=amr2cube(idir,type,xmin,xmax,\
-                                       ymin,ymax,zmin,zmax,lmax,nx,ny,nz)
+        self.cube, self.time = amr2cube(
+            idir,
+            sim_type,
+            xmin,
+            xmax,
+            ymin,
+            ymax,
+            zmin,
+            zmax,
+            lmax,
+            nx,
+            ny,
+            nz,
+        )
 
         if save_dir:
             numpy.save(cube_path, self.cube)
