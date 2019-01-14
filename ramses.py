@@ -18,6 +18,7 @@ class RamsesData:
         zmax=1,
         lmax=5,
         save_dir=None,
+        use_file_cache=False,
     ):
         """ Read RAMSES data and return a cube """
 
@@ -25,14 +26,14 @@ class RamsesData:
         time_path = os.path.join(save_dir, '{}_time.txt'.format(lmax))
 
         if (
-            save_dir
+            use_file_cache
+            and save_dir
             and os.path.isfile(cube_path)
             and os.path.isfile(time_path)
         ):
             self.cube = numpy.load(cube_path)
             with open(time_path) as time_file:
                 self.time = float(time_file.read().strip())
-
             return
 
         #Cube size parameter
@@ -60,7 +61,7 @@ class RamsesData:
             nz,
         )
 
-        if save_dir:
+        if use_file_cache and save_dir:
             numpy.save(cube_path, self.cube)
             with open(time_path, 'w') as time_file:
                 time_file.write(str(self.time))
