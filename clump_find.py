@@ -37,16 +37,16 @@ class ClumpFinder:
             os.makedirs(PLOT_DIR)
         if not os.path.exists(CLUMP_DIR):
             os.makedirs(CLUMP_DIR)
-            
+
         self._cube_data = None
         self._ramses_ds = None
         self._cube_ds = None
         self._disk = None
         self._master_clump = None
         self._leaf_clumps = None
-        
+
         self.max_level = max_level
-    
+
     @property
     def cube_data(self):
         if not self._cube_data:
@@ -63,13 +63,13 @@ class ClumpFinder:
                 use_file_cache=USE_FILE_CACHE,
             )
         return self._cube_data
-    
+
     @property
     def ramses_ds(self):
         if not self._ramses_ds:
             self._ramses_ds = yt.load(RAMSES_INPUT_INFO)
         return self._ramses_ds
-    
+
     @property
     def cube_ds(self):
         if not self._cube_ds:
@@ -79,7 +79,7 @@ class ClumpFinder:
                 length_unit=self.ramses_ds.length_unit/512,#3080*6.02,
             )
         return self._cube_ds
-    
+
     @property
     def disk(self):
         if not self._disk:
@@ -94,20 +94,23 @@ class ClumpFinder:
     @property
     def master_clump(self):
         if not self._master_clump:
-            clump_file = os.path.join(CLUMP_DIR, '{}_clumps.h5'.format(self.max_level))
+            clump_file = os.path.join(
+                CLUMP_DIR,
+                '{}_clumps.h5'.format(self.max_level)
+            )
             if USE_FILE_CACHE and os.path.isfile(clump_file):
                 self._master_clump = yt.load(clump_file)
             else:
                 self._master_clump = Clump(self.disk, "density")
                 find_clumps(
-                    clump=self._master_clump, 
-                    min_val=self.disk["density"].min(), 
-                    max_val=self.disk["density"].max(), 
+                    clump=self._master_clump,
+                    min_val=self.disk["density"].min(),
+                    max_val=self.disk["density"].max(),
                     d_clump=8.0, # Step size
                 )
                 if USE_FILE_CACHE:
                     self._master_clump.save_as_dataset(clump_file, ['density'])
-        
+
     @property
     def leaf_clumps(self):
         if not self._leaf_clumps:
@@ -115,15 +118,27 @@ class ClumpFinder:
         return self._leaf_clumps
 
     def plot_ramses(self):
-        plot = yt.ProjectionPlot(self.ramses_ds, "x", "density", center=GALAXY_CENTRE, width=(5, 'kpc'))
+        plot = yt.ProjectionPlot(
+            self.ramses_ds,
+            "x",
+            "density",
+            center=GALAXY_CENTRE,
+            width=(5, 'kpc')
+        )
         plot.save(os.path.join(PLOT_DIR, 'ramses_{}'.format(self.max_level)))
 
     def plot_cube(self):
-        plot = yt.ProjectionPlot(self.cube_ds, "x", "density", center=GALAXY_CENTRE, width=(5, 'kpc'))
+        plot = yt.ProjectionPlot(
+            self.cube_ds,
+            "x",
+            "density",
+            center=GALAXY_CENTRE,
+            width=(5, 'kpc')
+        )
         plot.save(os.path.join(PLOT_DIR, 'cube_{}'.format(self.max_level)))
         plot.annotate_clumps(self.leaf_clumps)
         plot.save(os.path.join(PLOT_DIR, 'clumps_{}'.format(self.max_level)))
-        
+
 
 if __name__ == "__main__":
     cf = ClumpFinder(int(sys.argv[1]))
