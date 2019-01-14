@@ -110,6 +110,7 @@ class ClumpFinder:
                 )
                 if USE_FILE_CACHE:
                     self._master_clump.save_as_dataset(clump_file, ['density'])
+        return self._master_clump
 
     @property
     def leaf_clumps(self):
