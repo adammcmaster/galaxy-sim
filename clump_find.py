@@ -168,7 +168,7 @@ class ClumpFinder:
             self.cube_ds,
             "x",
             "density",
-            center=GALAXY_CENTRE,
+            #center=GALAXY_CENTRE,
             # TODO: Re-enable once scaling is fixed.
           #  width=(5, 'kpc')
         )
