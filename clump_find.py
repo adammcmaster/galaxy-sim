@@ -3,6 +3,9 @@ import sys
 
 sys.path.insert(0, '/mnt/zfsusers/mcmaster/.virtualenvs/clumps/lib/python2.7/site-packages')
 
+import holoviews
+import numpy
+
 import yt
 from yt.analysis_modules.level_sets.api import *
 
@@ -10,7 +13,6 @@ from ramses import RamsesData
 
 GALAXY_CENTRE = [0.706731, 0.333133, 0.339857]
 CUBE_PADDING = 0.001
-#MAX_LEVEL = int(sys.argv[1])
 
 DATA_PATH = 'data'
 RAMSES_INPUT_NUM = 149
@@ -26,11 +28,9 @@ CUBE_DIR = os.path.join(DATA_PATH, 'cubes')
 PLOT_DIR = os.path.join(DATA_PATH, 'plots')
 CLUMP_DIR = os.path.join(DATA_PATH, 'clumps')
 
-USE_FILE_CACHE = False
-
 
 class ClumpFinder:
-    def __init__(self, max_level):
+    def __init__(self, max_level, label="", file_cache=True):
         if not os.path.exists(CUBE_DIR):
             os.makedirs(CUBE_DIR)
         if not os.path.exists(PLOT_DIR):
@@ -45,7 +45,12 @@ class ClumpFinder:
         self._master_clump = None
         self._leaf_clumps = None
 
-        self.max_level = max_level
+        self.max_level = int(max_level)
+        self.file_cache = file_cache
+        if label:
+            self.label = label
+        else:
+            self.label = max_level
 
     @property
     def cube_data(self):
@@ -60,7 +65,7 @@ class ClumpFinder:
                 zmax=GALAXY_CENTRE[2] + CUBE_PADDING,
                 lmax=self.max_level,
                 save_dir=CUBE_DIR,
-                use_file_cache=USE_FILE_CACHE,
+                use_file_cache=self.file_cache,
             )
         return self._cube_data
 
@@ -76,7 +81,8 @@ class ClumpFinder:
             self._cube_ds = yt.load_uniform_grid(
                 dict(density=self.cube_data.cube),
                 self.cube_data.cube.shape,
-                length_unit=self.ramses_ds.length_unit/512,#3080*6.02,
+                # TODO: Fix scaling. Doesn't find many clumps with this enabled.
+             #   length_unit=self.ramses_ds.length_unit/512,#3080*6.02,
             )
         return self._cube_ds
 
@@ -98,7 +104,9 @@ class ClumpFinder:
                 CLUMP_DIR,
                 '{}_clumps.h5'.format(self.max_level)
             )
-            if USE_FILE_CACHE and os.path.isfile(clump_file):
+            # TODO: Fix file format -- saved dataset loses attributes/isn't
+            # loaded as the right type
+            if False and os.path.isfile(clump_file):
                 self._master_clump = yt.load(clump_file)
             else:
                 self._master_clump = Clump(self.disk, "density")
@@ -108,7 +116,7 @@ class ClumpFinder:
                     max_val=self.disk["density"].max(),
                     d_clump=8.0, # Step size
                 )
-                if USE_FILE_CACHE:
+                if self.file_cache:
                     self._master_clump.save_as_dataset(clump_file, ['density'])
         return self._master_clump
 
@@ -126,7 +134,7 @@ class ClumpFinder:
             center=GALAXY_CENTRE,
             width=(5, 'kpc')
         )
-        plot.save(os.path.join(PLOT_DIR, 'ramses_{}'.format(self.max_level)))
+        plot.save(os.path.join(PLOT_DIR, 'ramses_{}'.format(self.label)))
 
     def plot_cube(self):
         plot = yt.ProjectionPlot(
@@ -134,14 +142,32 @@ class ClumpFinder:
             "x",
             "density",
             center=GALAXY_CENTRE,
-            width=(5, 'kpc')
+            # TODO: Re-enable once scaling is fixed.
+          #  width=(5, 'kpc')
         )
-        plot.save(os.path.join(PLOT_DIR, 'cube_{}'.format(self.max_level)))
+        plot.save(os.path.join(PLOT_DIR, 'cube_{}'.format(self.label)))
         plot.annotate_clumps(self.leaf_clumps)
-        plot.save(os.path.join(PLOT_DIR, 'clumps_{}'.format(self.max_level)))
+        plot.save(os.path.join(PLOT_DIR, 'clumps_{}'.format(self.label)))
+
+    def plot_volume_hist(self):
+        renderer = holoviews.renderer('bokeh')
+        volume_frequencies, volume_edges = numpy.histogram(
+            [c.data.volume().to_value() for c in self.leaf_clumps],
+            50,
+        )
+        hist = holoviews.Histogram((volume_edges, volume_frequencies))
+        hist = hist.options(
+            width=1000,
+            height=500,
+        )
+        renderer.save(
+            hist,
+            os.path.join(PLOT_DIR, 'volume_hist_{}'.format(self.label)),
+        )
 
 
 if __name__ == "__main__":
-    cf = ClumpFinder(int(sys.argv[1]))
+    cf = ClumpFinder(*sys.argv[1:])
     cf.plot_ramses()
     cf.plot_cube()
+    cf.plot_volume_hist()
