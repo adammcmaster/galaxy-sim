@@ -1,0 +1,5 @@
+numpy
+yt
+h5py
+holoviews
+bokeh
