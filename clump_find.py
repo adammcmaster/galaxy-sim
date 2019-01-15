@@ -13,6 +13,7 @@ from ramses import RamsesData
 
 GALAXY_CENTRE = [0.706731, 0.333133, 0.339857]
 CUBE_PADDING = 0.001
+CLOUD_DENSITY_THRESHOLD = 1e6 # TODO: Choose a sensible value for this
 
 DATA_PATH = 'data'
 RAMSES_INPUT_NUM = 149
@@ -27,7 +28,6 @@ RAMSES_INPUT_INFO = os.path.join(
 CUBE_DIR = os.path.join(DATA_PATH, 'cubes')
 PLOT_DIR = os.path.join(DATA_PATH, 'plots')
 CLUMP_DIR = os.path.join(DATA_PATH, 'clumps')
-
 
 class ClumpFinder:
     def __init__(self, max_level, label="", file_cache=True):
@@ -44,6 +44,8 @@ class ClumpFinder:
         self._disk = None
         self._master_clump = None
         self._leaf_clumps = None
+        self._clump_quantities = None
+        self._molecular_clouds = None
 
         self.max_level = int(max_level)
         self.file_cache = file_cache
@@ -51,6 +53,12 @@ class ClumpFinder:
             self.label = label
         else:
             self.label = max_level
+
+    @property
+    def ramses_ds(self):
+        if not self._ramses_ds:
+            self._ramses_ds = yt.load(RAMSES_INPUT_INFO)
+        return self._ramses_ds
 
     @property
     def cube_data(self):
@@ -70,19 +78,13 @@ class ClumpFinder:
         return self._cube_data
 
     @property
-    def ramses_ds(self):
-        if not self._ramses_ds:
-            self._ramses_ds = yt.load(RAMSES_INPUT_INFO)
-        return self._ramses_ds
-
-    @property
     def cube_ds(self):
         if not self._cube_ds:
             self._cube_ds = yt.load_uniform_grid(
                 dict(density=self.cube_data.cube),
                 self.cube_data.cube.shape,
                 # TODO: Fix scaling. Doesn't find many clumps with this enabled.
-             #   length_unit=self.ramses_ds.length_unit/512,#3080*6.02,
+                #length_unit=self.ramses_ds.length_unit/512,#3080*6.02,
             )
         return self._cube_ds
 
@@ -126,6 +128,31 @@ class ClumpFinder:
             self._leaf_clumps = get_lowest_clumps(self.master_clump)
         return self._leaf_clumps
 
+    @property
+    def clump_quantities(self):
+        if not self._clump_quantities:
+            self._clump_quantities = []
+            for clump in self.leaf_clumps:
+                self._clump_quantities.append({
+                    'clump': clump,
+                    'volume': clump.data.volume().to_value(),
+                    'mass': clump.data.quantities.total_mass().to_value()[0],
+                })
+                self._clump_quantities[-1]['density'] = (
+                    self._clump_quantities[-1]['mass'] /
+                    self._clump_quantities[-1]['volume']
+                )
+        return self._clump_quantities
+
+    @property
+    def molecular_clouds(self):
+        if not self._molecular_clouds:
+            self._molecular_clouds = [
+                cq for cq in self.clump_quantities
+                if cq['density'] >= CLOUD_DENSITY_THRESHOLD
+            ]
+        return self._molecular_clouds
+
     def plot_ramses(self):
         plot = yt.ProjectionPlot(
             self.ramses_ds,
@@ -134,9 +161,9 @@ class ClumpFinder:
             center=GALAXY_CENTRE,
             width=(5, 'kpc')
         )
-        plot.save(os.path.join(PLOT_DIR, 'ramses_{}'.format(self.label)))
+        plot.save(os.path.join(PLOT_DIR, '{}_ramses'.format(self.label)))
 
-    def plot_cube(self):
+    def plot_cube(self, annotated=True, plain=True):
         plot = yt.ProjectionPlot(
             self.cube_ds,
             "x",
@@ -145,24 +172,32 @@ class ClumpFinder:
             # TODO: Re-enable once scaling is fixed.
           #  width=(5, 'kpc')
         )
-        plot.save(os.path.join(PLOT_DIR, 'cube_{}'.format(self.label)))
-        plot.annotate_clumps(self.leaf_clumps)
-        plot.save(os.path.join(PLOT_DIR, 'clumps_{}'.format(self.label)))
+        if plain:
+            plot.save(os.path.join(PLOT_DIR, '{}_cube'.format(self.label)))
+        if annotated:
+            plot.annotate_clumps([c['clump'] for c in self.molecular_clouds])
+            plot.save(os.path.join(PLOT_DIR, '{}_clumps'.format(self.label)))
 
-    def plot_volume_hist(self):
-        renderer = holoviews.renderer('bokeh')
-        volume_frequencies, volume_edges = numpy.histogram(
-            [c.data.volume().to_value() for c in self.leaf_clumps],
-            50,
+    def plot_hist(
+        self,
+        label,
+        bins=50,
+        width=1000,
+        height=500,
+    ):
+        frequencies, edges = numpy.histogram(
+            [c[label] for c in self.molecular_clouds],
+            bins,
         )
-        hist = holoviews.Histogram((volume_edges, volume_frequencies))
+        renderer = holoviews.renderer('bokeh')
+        hist = holoviews.Histogram((edges, frequencies))
         hist = hist.options(
-            width=1000,
-            height=500,
+            width=width,
+            height=height,
         )
         renderer.save(
             hist,
-            os.path.join(PLOT_DIR, 'volume_hist_{}'.format(self.label)),
+            os.path.join(PLOT_DIR, '{}_hist_{}'.format(self.label, label)),
         )
 
 
@@ -170,4 +205,6 @@ if __name__ == "__main__":
     cf = ClumpFinder(*sys.argv[1:])
     cf.plot_ramses()
     cf.plot_cube()
-    cf.plot_volume_hist()
+    cf.plot_hist('volume')
+    cf.plot_hist('mass')
+    cf.plot_hist('density')
