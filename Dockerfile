@@ -13,4 +13,6 @@ COPY amr2cube.f90 /usr/src/
 
 RUN f2py -c amr2cube.f90 -m amr2cube
 
+RUN mv /usr/src/amr2cube.so /usr/local/lib/python2.7/
+
 COPY . /usr/src/

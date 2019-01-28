@@ -5,11 +5,18 @@ import numpy
 from amr2cube import amr2cube
 
 
+class SimTypes:
+    DENSITY = 1
+    X_VELOCITY = 2
+    Y_VELOCITY = 3
+    Z_VELOCITY = 4
+
+
 class RamsesData:
     def __init__(
         self,
         idir,
-        sim_type=1,
+        sim_type=SimTypes.DENSITY,
         xmin=0,
         xmax=1,
         ymin=0,

@@ -9,7 +9,7 @@ import numpy
 import yt
 from yt.analysis_modules.level_sets.api import *
 
-from ramses import RamsesData
+from ramses import SimTypes, RamsesData
 
 GALAXY_CENTRE = [0.706731, 0.333133, 0.339857]
 CUBE_PADDING = 0.001
@@ -38,7 +38,7 @@ class ClumpFinder:
         if not os.path.exists(CLUMP_DIR):
             os.makedirs(CLUMP_DIR)
 
-        self._cube_data = None
+        self._cube_data = {}
         self._ramses_ds = None
         self._cube_ds = None
         self._disk = None
@@ -60,11 +60,11 @@ class ClumpFinder:
             self._ramses_ds = yt.load(RAMSES_INPUT_INFO)
         return self._ramses_ds
 
-    @property
-    def cube_data(self):
-        if not self._cube_data:
-            self._cube_data = RamsesData(
+    def cube_data(self, sim_type):
+        if not sim_type in self._cube_data:
+            self._cube_data[sim_type] = RamsesData(
                 idir=RAMSES_INPUT_DIR,
+                sim_type=sim_type,
                 xmin=GALAXY_CENTRE[0] - CUBE_PADDING,
                 xmax=GALAXY_CENTRE[0] + CUBE_PADDING,
                 ymin=GALAXY_CENTRE[1] - CUBE_PADDING,
@@ -75,14 +75,19 @@ class ClumpFinder:
                 save_dir=CUBE_DIR,
                 use_file_cache=self.file_cache,
             )
-        return self._cube_data
+        return self._cube_data[sim_type]
 
     @property
     def cube_ds(self):
         if not self._cube_ds:
             self._cube_ds = yt.load_uniform_grid(
-                dict(density=self.cube_data.cube),
-                self.cube_data.cube.shape,
+                dict(
+                    density=self.cube_data(SimTypes.DENSITY).cube,
+                    velocity_x=self.cube_data(SimTypes.X_VELOCITY).cube,
+                    velocity_y=self.cube_data(SimTypes.Y_VELOCITY).cube,
+                    velocity_z=self.cube_data(SimTypes.Z_VELOCITY).cube,
+                ),
+                self.cube_data(SimTypes.DENSITY).cube.shape,
                 # TODO: Fix scaling. Doesn't find many clumps with this enabled.
                 #length_unit=self.ramses_ds.length_unit/512,#3080*6.02,
             )
@@ -163,11 +168,11 @@ class ClumpFinder:
         )
         plot.save(os.path.join(PLOT_DIR, '{}_ramses'.format(self.label)))
 
-    def plot_cube(self, annotated=True, plain=True):
+    def plot_cube(self, dim="x", field="density", annotated=True, plain=True):
         plot = yt.ProjectionPlot(
             self.cube_ds,
-            "x",
-            "density",
+            dim,
+            field,
             #center=GALAXY_CENTRE,
             # TODO: Re-enable once scaling is fixed.
           #  width=(5, 'kpc')
