@@ -1,4 +1,4 @@
-subroutine amr2cube(repository,type,xmin,xmax,ymin,ymax,zmin,zmax,lmax,&
+subroutine amr2cube(repository,sim_type,xmin,xmax,ymin,ymax,zmin,zmax,lmax,&
      & toto,t,n1,n2,n3)
   !--------------------------------------------------------------------------
   ! Ce programme calcule le cube cartesien pour les
@@ -9,12 +9,12 @@ subroutine amr2cube(repository,type,xmin,xmax,ymin,ymax,zmin,zmax,lmax,&
 
   real(KIND=8)::xmin,xmax,ymin,ymax,zmin,zmax
   character(LEN=128)::repository
-  integer::lmax,type
+  integer::lmax,sim_type
   !Output array variables
   integer :: n1,n2,n3
   real(KIND=4),dimension(n1,n2,n3)::toto
 
-!f2py intent(in) repository,type,xmin,xmax,ymin,ymax,zmin,zmax,lmax
+!f2py intent(in) repository,sim_type,xmin,xmax,ymin,ymax,zmin,zmax,lmax
 !f2py intent(out) toto
 !f2py intent(out) t
 
@@ -425,7 +425,7 @@ subroutine amr2cube(repository,type,xmin,xmax,ymin,ymax,zmin,zmax,lmax,&
                  ref(i)=son(i,ind)>0.and.ilevel<lmax
               end do
               ! Extract variable
-              select case (type)
+              select case (sim_type)
               case (-1)
                  rho = icpu
               case (0)
