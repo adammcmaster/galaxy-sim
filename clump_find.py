@@ -7,7 +7,7 @@ import holoviews
 import numpy
 
 import yt
-from yt.analysis_modules.level_sets.api import *
+from yt.data_objects.level_sets.api import Clump, find_clumps
 
 from ramses import SimTypes, RamsesData
 
@@ -130,7 +130,7 @@ class ClumpFinder:
     @property
     def leaf_clumps(self):
         if not self._leaf_clumps:
-            self._leaf_clumps = get_lowest_clumps(self.master_clump)
+            self._leaf_clumps = self.master_clump.leaves
         return self._leaf_clumps
 
     @property
