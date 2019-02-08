@@ -29,8 +29,12 @@ class RamsesData:
     ):
         """ Read RAMSES data and return a cube """
 
-        cube_path = os.path.join(save_dir, '{}_cube.npy'.format(lmax))
-        time_path = os.path.join(save_dir, '{}_time.txt'.format(lmax))
+        cube_path = os.path.join(save_dir, '{}_{}_cube.npy'.format(
+            lmax, sim_type
+        ))
+        time_path = os.path.join(save_dir, '{}_{}_time.txt'.format(
+            lmax, sim_type
+        ))
 
         if (
             use_file_cache
