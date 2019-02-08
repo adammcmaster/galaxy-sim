@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+  finder:
+    build:
+      context:  ./
+      dockerfile: Dockerfile
+    volumes:
+      - ${PWD}:/usr/src/
+    command: python clump_find.py 16
