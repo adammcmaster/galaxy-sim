@@ -158,11 +158,11 @@ class ClumpFinder:
             ]
         return self._molecular_clouds
 
-    def plot_ramses(self):
+    def plot_ramses(self, axis='x', fields='density'):
         plot = yt.ProjectionPlot(
             self.ramses_ds,
-            "x",
-            "density",
+            axis,
+            fields,
             center=GALAXY_CENTRE,
             width=(5, 'kpc')
         )
@@ -178,10 +178,18 @@ class ClumpFinder:
           #  width=(5, 'kpc')
         )
         if plain:
-            plot.save(os.path.join(PLOT_DIR, '{}_cube'.format(self.label)))
+            plot.save(os.path.join(PLOT_DIR, '{}_cube_{}_{}'.format(
+                self.label,
+                dim,
+                field,
+            )))
         if annotated:
             plot.annotate_clumps([c['clump'] for c in self.molecular_clouds])
-            plot.save(os.path.join(PLOT_DIR, '{}_clumps'.format(self.label)))
+            plot.save(os.path.join(PLOT_DIR, '{}_clumps_{}_{}'.format(
+                self.label,
+                dim,
+                field,
+            )))
 
     def plot_hist(
         self,
@@ -209,7 +217,13 @@ class ClumpFinder:
 if __name__ == "__main__":
     cf = ClumpFinder(*sys.argv[1:])
     cf.plot_ramses()
-    cf.plot_cube()
+    cf.plot_ramses(fields='velocity_x')
+    cf.plot_ramses(fields='velocity_y')
+    cf.plot_ramses(fields='velocity_z')
+    cf.plot_cube(annotated=False)
+    cf.plot_cube(field="velocity_x", annotated=False)
+    cf.plot_cube(field="velocity_y", annotated=False)
+    cf.plot_cube(field="velocity_z", annotated=False)
     cf.plot_hist('volume')
     cf.plot_hist('mass')
     cf.plot_hist('density')
