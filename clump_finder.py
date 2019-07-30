@@ -114,10 +114,11 @@ class ClumpFinder:
             )
             # TODO: Fix file format -- saved dataset loses attributes/isn't
             # loaded as the right type
-            if False and os.path.isfile(clump_file):
+            if self.file_cache and os.path.isfile(clump_file):
                 self._master_clump = yt.load(clump_file)
+                print(dir(self._master_clump))
             else:
-                self._master_clump = Clump(self.disk, "density")
+                self._master_clump = Clump(self.disk, ('gas', "density"))
                 find_clumps(
                     clump=self._master_clump,
                     min_val=self.disk["density"].min(),
@@ -125,7 +126,9 @@ class ClumpFinder:
                     d_clump=8.0, # Step size
                 )
                 if self.file_cache:
-                    self._master_clump.save_as_dataset(clump_file, ['density'])
+                    self._master_clump.save_as_dataset(clump_file, [
+                        'density',
+                    ])
         return self._master_clump
 
     @property
@@ -138,6 +141,8 @@ class ClumpFinder:
     def clump_quantities(self):
         if not self._clump_quantities:
             self._clump_quantities = []
+            print(dir(self.leaf_clumps[0]))
+            print(self.leaf_clumps[0])
             for clump in self.leaf_clumps:
                 self._clump_quantities.append({
                     'clump': clump,
