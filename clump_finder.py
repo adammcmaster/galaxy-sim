@@ -116,7 +116,6 @@ class ClumpFinder:
             # loaded as the right type
             if False and self.file_cache and os.path.isfile(clump_file):
                 self._master_clump = yt.load(clump_file)
-                print(dir(self._master_clump))
             else:
                 self._master_clump = Clump(self.disk, ('gas', "density"))
                 find_clumps(
@@ -141,8 +140,6 @@ class ClumpFinder:
     def clump_quantities(self):
         if not self._clump_quantities:
             self._clump_quantities = []
-            print(dir(self.leaf_clumps[0]))
-            print(self.leaf_clumps[0])
             for clump in self.leaf_clumps:
                 self._clump_quantities.append({
                     'clump': clump,
