@@ -114,7 +114,7 @@ class ClumpFinder:
             )
             # TODO: Fix file format -- saved dataset loses attributes/isn't
             # loaded as the right type
-            if self.file_cache and os.path.isfile(clump_file):
+            if False and self.file_cache and os.path.isfile(clump_file):
                 self._master_clump = yt.load(clump_file)
                 print(dir(self._master_clump))
             else:
@@ -239,18 +239,3 @@ class ClumpFinder:
                     cloud_data['bulk_velocity_2'],
                 ) = cloud['clump'].quantities.bulk_velocity()
                 w.writerow(cloud_data)
-
-if __name__ == "__main__":
-    cf = ClumpFinder(*sys.argv[1:])
-    cf.write_csv()
-    #cf.plot_ramses()
-    #cf.plot_ramses(fields='velocity_x')
-    #cf.plot_ramses(fields='velocity_y')
-    #cf.plot_ramses(fields='velocity_z')
-    cf.plot_cube(annotated=False)
-    cf.plot_cube(field="velocity_x", annotated=False)
-    cf.plot_cube(field="velocity_y", annotated=False)
-    cf.plot_cube(field="velocity_z", annotated=False)
-    #cf.plot_hist('volume')
-    #cf.plot_hist('mass')
-    #cf.plot_hist('density')

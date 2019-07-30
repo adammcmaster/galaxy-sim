@@ -7,4 +7,3 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ${PWD}:/usr/src/
-    command: python clump_finder.py 16
