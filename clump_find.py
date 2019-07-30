@@ -216,11 +216,36 @@ class ClumpFinder:
 
     def write_csv(self):
         with open(os.path.join(PLOT_DIR, '{}_clumps.csv'.format(self.label)), 'w') as out_f:
-            fields = ('volume', 'mass', 'density')
+            fields = (
+                'volume',
+                'mass',
+                'density',
+                'bulk_velocity_0',
+                'bulk_velocity_1',
+                'bulk_velocity_2',
+            )
             w = csv.DictWriter(out_f, fieldnames=fields, extrasaction='ignore')
             w.writerow({f:f for f in fields})
-            w.writerows(self.molecular_clouds)
+            for cloud in self.molecular_clouds:
+                cloud_data = dict(cloud)
+                (
+                    cloud_data['bulk_velocity_0'], 
+                    cloud_data['bulk_velocity_1'], 
+                    cloud_data['bulk_velocity_2'],
+                ) = cloud['clump'].quantities.bulk_velocity()
+                w.writerow(cloud_data)
 
 if __name__ == "__main__":
     cf = ClumpFinder(*sys.argv[1:])
     cf.write_csv()
+    #cf.plot_ramses()
+    #cf.plot_ramses(fields='velocity_x')
+    #cf.plot_ramses(fields='velocity_y')
+    #cf.plot_ramses(fields='velocity_z')
+    cf.plot_cube(annotated=False)
+    cf.plot_cube(field="velocity_x", annotated=False)
+    cf.plot_cube(field="velocity_y", annotated=False)
+    cf.plot_cube(field="velocity_z", annotated=False)
+    #cf.plot_hist('volume')
+    #cf.plot_hist('mass')
+    #cf.plot_hist('density')
