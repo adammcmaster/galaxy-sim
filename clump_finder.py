@@ -114,7 +114,9 @@ class ClumpFinder:
             )
             # TODO: Fix file format -- saved dataset loses attributes/isn't
             # loaded as the right type
-            if False and self.file_cache and os.path.isfile(clump_file):
+            orig_file_cache = self.file_cache
+            self.file_cache = False
+            if self.file_cache and os.path.isfile(clump_file):
                 self._master_clump = yt.load(clump_file)
             else:
                 self._master_clump = Clump(self.disk, ('gas', "density"))
@@ -128,6 +130,7 @@ class ClumpFinder:
                     self._master_clump.save_as_dataset(clump_file, [
                         'density',
                     ])
+            self.file_cache = orig_file_cache
         return self._master_clump
 
     @property
