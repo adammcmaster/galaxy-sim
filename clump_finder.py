@@ -148,6 +148,12 @@ class ClumpFinder:
                     'clump': clump,
                     'volume': clump.data.volume().to_value(),
                     'mass': clump.data.quantities.total_mass().to_value()[0],
+                    'velocity_x_mean': clump.data['velocity_x'].mean(),
+                    'velocity_y_mean': clump.data['velocity_y'].mean(),
+                    'velocity_z_mean': clump.data['velocity_z'].mean(),
+                    'velocity_x_var': clump.data['velocity_x'].var(),
+                    'velocity_y_var': clump.data['velocity_y'].var(),
+                    'velocity_z_var': clump.data['velocity_z'].var(),
                 })
                 self._clump_quantities[-1]['density'] = (
                     self._clump_quantities[-1]['mass'] /
