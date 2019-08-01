@@ -153,6 +153,11 @@ class ClumpFinder:
                     self._clump_quantities[-1]['mass'] /
                     self._clump_quantities[-1]['volume']
                 )
+                (
+                    self._clump_quantities[-1]['bulk_velocity_0'], 
+                    self._clump_quantities[-1]['bulk_velocity_1'], 
+                    self._clump_quantities[-1]['bulk_velocity_2'],
+                ) = clump.quantities.bulk_velocity().to_value()
         return self._clump_quantities
 
     @property
@@ -221,21 +226,10 @@ class ClumpFinder:
 
     def write_csv(self):
         with open(os.path.join(PLOT_DIR, '{}_clumps.csv'.format(self.label)), 'w') as out_f:
-            fields = (
-                'volume',
-                'mass',
-                'density',
-                'bulk_velocity_0',
-                'bulk_velocity_1',
-                'bulk_velocity_2',
-            )
+            fields = [
+                k for k in self.clump_quantities[0].keys() if k != 'clump'
+            ]
             w = csv.DictWriter(out_f, fieldnames=fields, extrasaction='ignore')
             w.writerow({f:f for f in fields})
             for cloud in self.molecular_clouds:
-                cloud_data = dict(cloud)
-                (
-                    cloud_data['bulk_velocity_0'], 
-                    cloud_data['bulk_velocity_1'], 
-                    cloud_data['bulk_velocity_2'],
-                ) = cloud['clump'].quantities.bulk_velocity()
-                w.writerow(cloud_data)
+                w.writerow(cloud)
