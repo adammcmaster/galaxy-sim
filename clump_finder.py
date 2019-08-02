@@ -1,11 +1,7 @@
-import csv
 import os
 import sys
 
 sys.path.insert(0, '/mnt/zfsusers/mcmaster/.virtualenvs/clumps/lib/python2.7/site-packages')
-
-import holoviews
-import numpy
 
 import yt
 from yt.data_objects.level_sets.api import Clump, find_clumps
@@ -174,68 +170,3 @@ class ClumpFinder:
                 if cq['density'] >= CLOUD_DENSITY_THRESHOLD
             ]
         return self._molecular_clouds
-
-    def plot_ramses(self, axis='x', fields='density'):
-        plot = yt.ProjectionPlot(
-            self.ramses_ds,
-            axis,
-            fields,
-            center=GALAXY_CENTRE,
-            width=(5, 'kpc')
-        )
-        plot.save(os.path.join(PLOT_DIR, '{}_ramses'.format(self.label)))
-
-    def plot_cube(self, dim="x", field="density", annotated=True, plain=True):
-        plot = yt.ProjectionPlot(
-            self.cube_ds,
-            dim,
-            field,
-            #center=GALAXY_CENTRE,
-            # TODO: Re-enable once scaling is fixed.
-          #  width=(5, 'kpc')
-        )
-        if plain:
-            plot.save(os.path.join(PLOT_DIR, '{}_cube_{}_{}'.format(
-                self.label,
-                dim,
-                field,
-            )))
-        if annotated:
-            plot.annotate_clumps([c['clump'] for c in self.molecular_clouds])
-            plot.save(os.path.join(PLOT_DIR, '{}_clumps_{}_{}'.format(
-                self.label,
-                dim,
-                field,
-            )))
-
-    def plot_hist(
-        self,
-        label,
-        bins=50,
-        width=1000,
-        height=500,
-    ):
-        frequencies, edges = numpy.histogram(
-            [c[label] for c in self.molecular_clouds],
-            bins,
-        )
-        renderer = holoviews.renderer('bokeh')
-        hist = holoviews.Histogram((edges, frequencies))
-        hist = hist.options(
-            width=width,
-            height=height,
-        )
-        renderer.save(
-            hist,
-            os.path.join(PLOT_DIR, '{}_hist_{}'.format(self.label, label)),
-        )
-
-    def write_csv(self):
-        with open(os.path.join(PLOT_DIR, '{}_clumps.csv'.format(self.label)), 'w') as out_f:
-            fields = [
-                k for k in self.clump_quantities[0].keys() if k != 'clump'
-            ]
-            w = csv.DictWriter(out_f, fieldnames=fields, extrasaction='ignore')
-            w.writerow({f:f for f in fields})
-            for cloud in self.molecular_clouds:
-                w.writerow(cloud)
