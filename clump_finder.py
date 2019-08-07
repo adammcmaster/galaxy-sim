@@ -83,6 +83,7 @@ class ClumpFinder:
                     velocity_x=self.cube_data(SimTypes.X_VELOCITY).cube,
                     velocity_y=self.cube_data(SimTypes.Y_VELOCITY).cube,
                     velocity_z=self.cube_data(SimTypes.Z_VELOCITY).cube,
+                    pressure=self.cube_data(SimTypes.PRESSURE).cube,
                 ),
                 self.cube_data(SimTypes.DENSITY).cube.shape,
                 # TODO: Fix scaling. Doesn't find many clumps with this enabled.
@@ -150,6 +151,7 @@ class ClumpFinder:
                     'velocity_x_var': clump.data['velocity_x'].var(),
                     'velocity_y_var': clump.data['velocity_y'].var(),
                     'velocity_z_var': clump.data['velocity_z'].var(),
+                    'pressure_mean': clump.data['pressure'].mean(),
                 })
                 self._clump_quantities[-1]['density'] = (
                     self._clump_quantities[-1]['mass'] /

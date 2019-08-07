@@ -10,6 +10,7 @@ class SimTypes:
     X_VELOCITY = 2
     Y_VELOCITY = 3
     Z_VELOCITY = 4
+    PRESSURE = 5
 
 
 class RamsesData:
