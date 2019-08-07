@@ -29,7 +29,7 @@ def plot_cube(dim="x", field="density", annotated=True, plain=True):
             field,
         )))
 
-plot_cube(annotated=False)
+plot_cube()
 plot_cube(field="velocity_x", annotated=False)
 plot_cube(field="velocity_y", annotated=False)
 plot_cube(field="velocity_z", annotated=False)
